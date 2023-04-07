@@ -7,8 +7,18 @@ from collections import namedtuple
 # Inicializa el motor de pygame
 pygame.init()
 
+TAM_BLOQUE            = 20
+VELOCIDAD             = 1
 
-TAM_BLOQUE = 25
+COLOR_CABEZA_VIVORITA = ( 33, 0, 98 )
+COLOR_VIVORITA        = ( 87, 108, 188 )
+AUX                   = ( 36, 89, 83 )
+COLOR_VIVORITA_DENTRO = ( 122, 168, 116 )
+COLOR_FONDO           = (  0, 159, 189 )
+COLOR_FRUTA           = ( 47, 15, 93 )
+COLOR_PUNTAJE         = ( 66, 66, 66 )
+
+COLOR_CABEZA_VIVORITA_DENTRO = ( 26, 95, 122 )
 
 
 class Direcciones( Enum ):
@@ -20,7 +30,6 @@ class Direcciones( Enum ):
 
 Puntos = namedtuple( 'Puntos', 'x, y' )
 
-
 class VivoritaJuego:
 
     def __init__ ( self, ancho=640, alto=480 ):
@@ -28,11 +37,12 @@ class VivoritaJuego:
         self.ALTO    = alto
 
         self.puntaje = 0
-        self.frutas  = None
+        self.fruta   = None
 
 
-        self.display = pygame.display.set_mode(( self.ANCHO, self.ALTO ))
+        self.pantalla = pygame.display.set_mode(( self.ANCHO, self.ALTO ))
         pygame.display.set_caption( 'Vivorita' )
+        self.fuente = pygame.font.SysFont( 'freeserif', 20 )
         self.reloj = pygame.time.Clock()
 
         self.direccion = Direcciones.DERECHA
@@ -44,14 +54,59 @@ class VivoritaJuego:
             Puntos( self.cabeza.x - ( TAM_BLOQUE * 2 ), self.cabeza.y )
         ]
 
-    def _posicion_fruta ( self ):
+        self._crear_fruta()
+
+    def _crear_fruta ( self ):
         x = randint( 0, ( self.ANCHO - TAM_BLOQUE ) // TAM_BLOQUE ) * TAM_BLOQUE
         y = randint( 0, ( self.ALTO  - TAM_BLOQUE ) // TAM_BLOQUE ) * TAM_BLOQUE
 
-        self.frutas = Puntos( x, y )
+        self.fruta = Puntos( x, y )
 
-        if self.frutas in self.vivorita:
-            self._posicion_fruta()
+        if self.fruta in self.vivorita:
+            self._crear_fruta()
+
+
+    def _ha_chocado ( self ):
+        if self.cabeza in self.vivorita[ 1: ]:
+            return True
+
+        if self.cabeza.x > ( self.ANCHO - TAM_BLOQUE ) or self.cabeza.x < 0 or self.cabeza.y > ( self.ALTO - TAM_BLOQUE ) or self.cabeza.y < 0:
+            return True
+        
+        return False
+    
+
+    def _mover ( self, direccion ):
+        x = self.cabeza.x
+        y = self.cabeza.y
+        if direccion == Direcciones.DERECHA:
+            x += TAM_BLOQUE
+        elif direccion == Direcciones.IZQUIERDA:
+            x -= TAM_BLOQUE
+        elif direccion == Direcciones.ARRIBA:
+            y -= TAM_BLOQUE
+        elif direccion == Direcciones.ABAJO:
+            y += TAM_BLOQUE
+
+        self.cabeza = Puntos( x, y )
+
+    def _actualizar_pantalla ( self ):
+
+        self.pantalla.fill( COLOR_FONDO )
+        pygame.draw.rect( self.pantalla, COLOR_CABEZA_VIVORITA, pygame.Rect( self.vivorita[ 0 ].x, self.vivorita[ 0 ].y, TAM_BLOQUE, TAM_BLOQUE ) )
+        pygame.draw.rect( self.pantalla, COLOR_CABEZA_VIVORITA_DENTRO, pygame.Rect( self.vivorita[ 0 ].x + 4, self.vivorita[ 0 ].y + 4, 12, 12 ) )
+        for bloque_cuerpo in self.vivorita[ 1: ]:
+            pygame.draw.rect( self.pantalla, COLOR_VIVORITA, pygame.Rect( bloque_cuerpo.x, bloque_cuerpo.y, TAM_BLOQUE, TAM_BLOQUE ) )
+            pygame.draw.rect( self.pantalla, COLOR_VIVORITA_DENTRO, pygame.Rect( bloque_cuerpo.x + 4, bloque_cuerpo.y + 4, 12, 12 ) )
+
+        x_fruta = 0
+        y_fruta = 0
+        if self.fruta:
+            x_fruta = self.fruta.x
+            y_fruta = self.fruta.y
+        pygame.draw.rect( self.pantalla, COLOR_FRUTA, pygame.Rect( x_fruta, y_fruta, TAM_BLOQUE, TAM_BLOQUE ) )
+        pygame.display.flip()
+
 
     def verificar_movimiento ( self ):
 
@@ -72,21 +127,41 @@ class VivoritaJuego:
                 if event.key == pygame.K_DOWN or event.key == pygame.K_s:
                     if self.direccion != Direcciones.ARRIBA:
                         self.direccion = Direcciones.ABAJO
+        
+        self._mover( self.direccion )
+        self.vivorita.insert( 0, self.cabeza )
 
-    def _mover ( self, direccion ):
-        x = self.cabeza.x
-        y = self.cabeza.y
-        if direccion == Direcciones.DERECHA:
-            x += TAM_BLOQUE
-        elif direccion == Direcciones.IZQUIERDA:
-            x -= TAM_BLOQUE
-        elif direccion == Direcciones.ARRIBA:
-            y -= TAM_BLOQUE
-        elif direccion == Direcciones.ABAJO:
-            y += TAM_BLOQUE
+        juego_terminado = False        
 
-        self.cabeza = Puntos( x, y )
+        if self._ha_chocado():
+            print( pygame.font.get_fonts() )
+            juego_terminado = True
+            return juego_terminado, self.puntaje
+
+        if self.cabeza == self.fruta:
+            self.puntaje += 1
+            self._crear_fruta()
+        else:
+            self.vivorita.pop()
+
+        self._actualizar_pantalla()
+        self.reloj.tick( VELOCIDAD )
+        self.fuente.render( f"Puntaje: { self.puntaje }", True, COLOR_FRUTA )
+
+        return juego_terminado, self.puntaje
+
+if __name__ == '__main__':
+    juego = VivoritaJuego()
+
+    i = 0
+
+    while True:
+        juego_terminado, puntaje = juego.verificar_movimiento()
+        if juego_terminado:
+            break
+
+    print( f"Puntaje: { puntaje }" )
+    pygame.quit()
 
 
-            
 
