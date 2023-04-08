@@ -6,6 +6,7 @@ from collections import namedtuple
 
 # Inicializa el motor de pygame
 pygame.init()
+fuente = pygame.font.SysFont( 'freeserif', 25 )
 
 TAM_BLOQUE            = 20
 VELOCIDAD             = 1
@@ -42,7 +43,6 @@ class VivoritaJuego:
 
         self.pantalla = pygame.display.set_mode(( self.ANCHO, self.ALTO ))
         pygame.display.set_caption( 'Vivorita' )
-        self.fuente = pygame.font.SysFont( 'freeserif', 20 )
         self.reloj = pygame.time.Clock()
 
         self.direccion = Direcciones.DERECHA
@@ -105,6 +105,8 @@ class VivoritaJuego:
             x_fruta = self.fruta.x
             y_fruta = self.fruta.y
         pygame.draw.rect( self.pantalla, COLOR_FRUTA, pygame.Rect( x_fruta, y_fruta, TAM_BLOQUE, TAM_BLOQUE ) )
+        texto = fuente.render( f"Puntaje: { self.puntaje }", True, COLOR_PUNTAJE )
+        self.pantalla.blit( texto, ( 0, 0 ) )
         pygame.display.flip()
 
 
@@ -134,7 +136,6 @@ class VivoritaJuego:
         juego_terminado = False        
 
         if self._ha_chocado():
-            print( pygame.font.get_fonts() )
             juego_terminado = True
             return juego_terminado, self.puntaje
 
@@ -146,7 +147,6 @@ class VivoritaJuego:
 
         self._actualizar_pantalla()
         self.reloj.tick( VELOCIDAD )
-        self.fuente.render( f"Puntaje: { self.puntaje }", True, COLOR_FRUTA )
 
         return juego_terminado, self.puntaje
 
