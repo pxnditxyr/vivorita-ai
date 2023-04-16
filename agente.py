@@ -163,7 +163,7 @@ def entrenar ():
             puntaje_total += puntaje_obtenido
             puntaje_medio = puntaje_total / agente.numero_juegos
             puntajes_medios_a_graficar.append( puntaje_medio )
-            graficar( puntajes_a_graficar, puntajes_medios_a_graficar )
+            # graficar( puntajes_a_graficar, puntajes_medios_a_graficar )
 
 
 

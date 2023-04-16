@@ -8,7 +8,7 @@ pygame.init()
 fuente = pygame.font.SysFont( 'freeserif', 25 )
 
 TAM_BLOQUE            = 20
-VELOCIDAD             = 1
+VELOCIDAD             = 200
 
 COLOR_CABEZA_VIVORITA = ( 33, 0, 98 )
 COLOR_VIVORITA        = ( 87, 108, 188 )
